@@ -237,6 +237,7 @@ ServoModel_t servoModelList[] = {
 int zeroPosition[DOF] = {};
 int calibratedZeroPosition[DOF] = {};
 
+int previousAng[DOF];
 #ifdef X_LEG
 int currentAng[DOF] = { -30, -80, -45, 0,
                         0, 0, 0, 0,
@@ -356,6 +357,7 @@ template <typename T> void arrayNCPY(T * destination, const T * source, int len)
 #include "camera.h"
 #elif defined ULTRASONIC
 #include "ultrasonic.h"
+#elif defined OTHER_MODULE 
 #else
 #define GYRO_PIN  0
 #endif

@@ -37,7 +37,7 @@
   3. Uncomment #define MAIN_SKETCH to make it active. Then upload the program for main functions.
 */
 
-//#define MAIN_SKETCH //the Petoi App only works when this mode is on
+#define MAIN_SKETCH //the Petoi App only works when this mode is on
 //#define AUTO_INIT //automatically select 'Y' for the reset joint and IMU prompts
 //#define DEVELOPER //to print out some verbose debugging data
 
@@ -66,6 +66,7 @@
 //After uploading the code, you may need to press the reset buttons on the module and then the NyBoard.
 //The tracking demo works the best with a yellow tennis ball or some other round objects. Demo: https://www.youtube.com/watch?v=CxGI-MzCGWM
 
+#define OTHER_MODULE 
 
 #include "src/OpenCat.h"
 

@@ -67,14 +67,15 @@ float adjust(byte i) {
   return currentAdjust[i];
 }
 
-
 void calibratedPWM(byte i, float angle, float speedRatio = 0) {
   /*float angle = max(-SERVO_ANG_RANGE/2, min(SERVO_ANG_RANGE/2, angle));
     if (i > 3 && i < 8)
     angle = max(-5, angle);*/
   angle = max(float(loadAngleLimit(i, 0)), min(float(loadAngleLimit(i, 1)), angle));
   int duty0 = EEPROMReadInt(CALIBRATED_ZERO_POSITIONS + i * 2) + currentAng[i] * eeprom(ROTATION_DIRECTION, i);
+  previousAng[i] = currentAng[i];
   currentAng[i] = angle;
+
   int duty = EEPROMReadInt(CALIBRATED_ZERO_POSITIONS + i * 2) + angle * eeprom(ROTATION_DIRECTION, i);
   int steps = speedRatio > 0 ? int(round(abs(duty - duty0) / 1.0/*degreeStep*/ / speedRatio)) : 0;
   //if default speed is 0, no interpolation will be used
@@ -96,7 +97,9 @@ template <typename T> void transform( T * target, byte angleDataRatio = 1, float
       || servoOff
 #endif
      ) { // the speed ratio should be >0, if the user enters some large numbers, it will become negative
+    #ifndef GYRO_PIN
     PTL("slow boot");
+    #endif
     allCalibratedPWM(target, offset);
 #ifdef SERVO_SLOW_BOOT
     if (servoOff) { //slow boot up for servos
@@ -105,21 +108,35 @@ template <typename T> void transform( T * target, byte angleDataRatio = 1, float
     }
 #endif
   }
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   else {
-    int *diff = new int [DOF - offset], maxDiff = 0;
-    for (byte i = offset; i < DOF; i++) {
-      diff[i - offset] =   currentAng[i] - target[i - offset] * angleDataRatio;
-      maxDiff = max(maxDiff, abs( diff[i - offset]));
+
+    int maxDiff = 0;
+    T *nextFrame = target + DOF - offset; 
+    //svel: vel at the starting point of the interpolation.   evel: vel at the ending point.
+    int *svel = new int [DOF - offset];
+    int *evel = new int [DOF - offset]; 
+    int *cAng_cp = new int [DOF];
+    arrayNCPY(cAng_cp,currentAng,DOF);
+    for (byte i = offset; i < DOF; i++){
+      maxDiff = max(maxDiff, abs( currentAng[i] - target[i - offset] * angleDataRatio));
+      svel[i-offset] =currentAng[i]-previousAng[i];
+      evel[i-offset] = (offset!=0)?nextFrame[i - offset]*angleDataRatio-target[i - offset]*angleDataRatio:0;
     }
 
-    int steps = int(round(maxDiff / 1.0/*degreeStep*/ / speedRatio));//default speed is 1 degree per step
+    int steps = int(round(maxDiff/speedRatio));//default speed is 1 degree per step
+    //int steps = (offset!=0)?10:20;// interpolation points
 
-    for (int s = 0; s <= steps; s++) {
-      for (byte i = offset; i < DOF; i++) {
-        float dutyAng = (target[i - offset] * angleDataRatio + (steps == 0 ? 0 : (1 + cos(M_PI * s / steps)) / 2 * diff[i - offset]));
-        calibratedPWM(i,  dutyAng);
+    for (int i = 0; i < steps; i++) {
+      for (int j = 0; j < DOF - offset; j++) {
+        ///////////////interpolation///////////////
+        float A = (float)(svel[j] + evel[j])  / pow(steps, 2) - 2 * (target[j]*angleDataRatio - cAng_cp[j+offset]) / pow(steps, 3);
+        float B = (float)(-2 * svel[j]  - evel[j] ) / steps + 3 * (target[j]*angleDataRatio - cAng_cp[j+offset]) / pow(steps, 2);
+        calibratedPWM (j+offset, A * pow(i, 3) + B * pow(i, 2) + svel[j]  * i + cAng_cp[j+offset]);
       }
     }
-    delete [] diff;
+    delete [] svel;
+    delete [] evel;
+    delete [] cAng_cp;
   }
 }
