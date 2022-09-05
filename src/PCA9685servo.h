@@ -26,9 +26,9 @@
 #include "Adafruit-PWM-Servo-Driver-Library/Adafruit_PWMServoDriver.h"
 
 #define P_STEP 32
-#define P_BASE 3000 + 4 * P_STEP
-#define P_HARD (P_BASE + P_STEP * 4)
-#define P_SOFT (P_BASE - P_STEP * 0)
+#define P_BASE 3000 + P_STEP * 6  //3000~3320
+#define P_HARD (P_BASE + P_STEP * 2)
+#define P_SOFT (P_BASE - P_STEP * 2)
 
 #define SERVO_FREQ 240
 #ifndef PWM_READ_PIN
@@ -182,7 +182,9 @@ void setServoP(unsigned int p) {
 */
 long initValue;
 void PCA9685CalibrationPrompt() {
-  PTL("Optional: Connect PWM pin " + String(eeprom(PWM_PIN, 3)) + " -> Grove pin A3 to calibrate PCA9685");
+  PT("Optional: Connect PWM ");
+  PT(eeprom(PWM_PIN, 3));
+  PTL(" -> Grove pin A3 to calibrate PCA9685");
 }
 
 int measurePulseWidth(uint8_t pwmReadPin) {
@@ -192,15 +194,16 @@ int measurePulseWidth(uint8_t pwmReadPin) {
   return (micros() - t1);
 }
 
+byte match = 0;
 void calibratePCA9685() {
-  delay(50);
+  delay(100);
   if (!calibrated && analogRead(PWM_READ_PIN) == 0) { //the pins are connected
     //    for (byte i = 0; i < 16; i++)
     pwm.writeMicroseconds(eeprom(PWM_PIN, 3), 1500);
-    delay(5);
     int actualPulseWidth;
     actualPulseWidth = 0;
     for (int i = 0; i < 11; i++) {
+      delay(10);
       int oneReading = measurePulseWidth(PWM_READ_PIN);
       if (i > 0)
         actualPulseWidth += oneReading;
@@ -210,12 +213,19 @@ void calibratePCA9685() {
 
     if (actualFreq >= 23000 && actualFreq <= 27000) {
       PTL(actualFreq);
-      if (actualFreq == lastValue) {//this condition is strong enough to ensure the calibration is correct
-        EEPROMWriteInt(PCA9685_FREQ, actualFreq);
-        Serial.println("Calibrated: " + String(actualFreq) + " kHz");
-        beep(20, 100, 50, 3);
-        calibrated = true;
+      if (actualFreq == lastValue) {
+        match++;
+        if (match == 2) {
+          EEPROMWriteInt(PCA9685_FREQ, actualFreq);
+          PT("Calibrated: ");
+          PT(actualFreq);
+          PT(" kHz");
+          beep(20, 100, 50, 3);
+          calibrated = true;
+        }
       }
+      else
+        match = 0;
     }
     lastValue = actualFreq;
   }
@@ -227,14 +237,10 @@ void servoSetup() {
   }
   pwm.begin();
   initValue = EEPROMReadInt(PCA9685_FREQ);
-  if (initValue < 23000 || initValue > 27000) {
+  if (initValue < 23000 || initValue > 27000)
     initValue = 25000;
-    PTLF("25MHz");
-  }
-  else {
-    PT(initValue);
-    PTLF("kHz");
-  }
+  PT(float(initValue) / 1000);
+  PTLF("MHz");
   pwm.setup(DOF, long(initValue) * 1000);
   pwm.shutServos();
 }

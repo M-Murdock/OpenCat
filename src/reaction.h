@@ -77,7 +77,7 @@ void reaction() {
         && token != T_LISTED_BIN && token != T_INDEXED_SIMULTANEOUS_BIN  && token != T_COLOR
 #endif
        )
-      beep(10 + newCmdIdx * 2); //ToDo: check the muted sound when newCmdIdx = -1
+      beep(15 + newCmdIdx, 5); //ToDo: check the muted sound when newCmdIdx = -1
     if ((lastToken == T_CALIBRATE || lastToken == T_REST) && token != T_CALIBRATE) {
       setServoP(P_SOFT);
       checkGyro = true;
@@ -207,9 +207,9 @@ void reaction() {
             targetFrame[target[0]] = target[1];
             int angleStep = 0;
             if (token == T_CALIBRATE) {
-              setServoP(P_HARD);
               checkGyro = false;
               if (lastToken != T_CALIBRATE) {
+                setServoP(P_HARD);
                 strcpy(newCmd, "calib");
                 skill.loadFrame(newCmd);
               }
@@ -362,7 +362,9 @@ void reaction() {
 #endif
   }
   if (skill.period < 0 ) {
-    if (exceptions && lastCmd[strlen(lastCmd) - 1] < 'a' && skill.lookupAddressByName(lastCmd) > 0) { //lastToken == T_SKILL && lastSkill->period > 0) {
+    if (exceptions && lastCmd[strlen(lastCmd) - 1] < 'L' && skill.lookupAddressByName(lastCmd) > 0) { //lastToken == T_SKILL && lastSkill->period > 0) {
+      // if the last command is not a behavior and not a turning gait. case wkF, wkL, wkR, rlL, rlR
+      
       strcpy(newCmd, lastCmd);
     }
     else {

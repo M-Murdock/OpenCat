@@ -96,11 +96,10 @@ template <typename T> void transform( T * target, byte angleDataRatio = 1, float
       || servoOff
 #endif
      ) { // the speed ratio should be >0, if the user enters some large numbers, it will become negative
-    PTL("slow boot");
     allCalibratedPWM(target, offset);
 #ifdef SERVO_SLOW_BOOT
     if (servoOff) { //slow boot up for servos
-      delay(1000);
+      delay(500);
       servoOff = false;
     }
 #endif
