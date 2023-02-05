@@ -38,7 +38,7 @@
 */
 
 #define MAIN_SKETCH  //the Petoi App only works when this mode is on
-//#define AUTO_INIT //automatically select 'Y' for the reset joint and IMU prompts
+#define AUTO_INIT //automatically select 'Y' for the reset joint and IMU prompts
 //#define DEVELOPER //to print out some verbose debugging data
                     //it may increase the code size and crash the bootloader. 
                     //make sure you know ISP and how to reset the bootloader!!!
@@ -46,15 +46,19 @@
 #define BITTLE  //Petoi 9 DOF robot dog: 1x on head + 8x on leg
 //#define NYBBLE  //Petoi 11 DOF robot cat: 2x on head + 1x on tail + 8x on leg
 
+
 //#define NyBoard_V0_1
 //#define NyBoard_V0_2
-//#define NyBoard_V1_0
-#define NyBoard_V1_1
+#define NyBoard_V1_0
+//#define NyBoard_V1_1
 //#define NyBoard_V1_2
+
+#define HIGH_LEVEL_RANDOM
+#define LOW_LEVEL_RANDOM
 
 //you can also activate the following modes (they will disable the gyro to save programming space)
 //allowed combinations: RANDOM_MIND + ULTRASONIC, RANDOM_MIND, ULTRASONIC, VOICE, CAMERA
-//#define RANDOM_MIND     //advanced random behaviors. use token 'z' to activate/deactivate
+#define RANDOM_MIND     //advanced random behaviors. use token 'z' to activate/deactivate
 //#define ULTRASONIC      //for Nybble's ultrasonic sensor
 //#define VOICE           //Petoi Grove voice module
 //#define VOICE_LD3320    //for LD3320 module
@@ -70,7 +74,7 @@
 //After uploading the code, you may need to press the reset buttons on the module and then the NyBoard.
 //The tracking demo works the best with a yellow tennis ball or some other round objects. Demo: https://www.youtube.com/watch?v=CxGI-MzCGWM
 
-// #define OTHER_MODULES  //uncomment this line to disable the gyroscope code to save programming resources for other modules.
+#define OTHER_MODULES  //uncomment this line to disable the gyroscope code to save programming resources for other modules.
 
 #include "src/OpenCat.h"
 
@@ -90,10 +94,10 @@ void setup() {
 
 void loop() {
 #ifdef MAIN_SKETCH
-#ifdef VOLTAGE_DETECTION_PIN
-  lowBattery();  //  block the loop if battery is low
-  //  can be disabled to save programming space and reduce the low voltage interruptions
-#endif
+// #ifdef VOLTAGE_DETECTION_PIN
+//   lowBattery();  //  block the loop if battery is low
+//   //  can be disabled to save programming space and reduce the low voltage interruptions
+// #endif
 #ifdef GYRO_PIN
   readEnvironment();     //reads the IMU (Inertia Measurement Unit, i.e. acceleration and angles).
                          //May read more sensors in the future
@@ -106,6 +110,10 @@ void loop() {
   //or put it in the readSignal() function of src/io.h
 #endif
 
+#ifdef HIGH_LEVEL_RANDOM // causes Bittle to randomly perform high level actions (see `OpenCat/src/randomMind.h`)
+  randomMind(); 
+#endif
+
   reaction();  //handle different commands
 #else
   calibratePCA9685();
@@ -115,24 +123,34 @@ void loop() {
 #ifdef OTHER_MODULES  //remember to activate the #define OTHER_MODULES at the begining of this code to activate the following section
 void otherModule() {  //this is an example that use the analog input pin A2 as a touch pad
                       //The A2 pin is in the second Grove socket of the NyBoard
-  int currentReading = analogRead(A2);
-  PT("Reading on pin A2:\t");
-  PTL(currentReading);
-  if (currentReading > 200) {          //touch and hold on the A2 pin until the condition is met
-    beep(10, 20, 50, 3);               //make sound within this function body
-    skill.loadFrame("balance");        //load a posture within this function body
-    strcpy(newCmd, "balance");         //because this command is not processed by the reaction(), you need to update the newCmd for the program to track it
-    strcpy(dataBuffer, "0 -30 0 30");  //load a command to be processed by the later reaction function
-    newCmdIdx = 5;                     //tells the reaction function that there's a new command (as long as it's larger than 0)
-    token = T_INDEXED_SEQUENTIAL_ASC;  //tells the reaction function about the command type
-                                       //T_INDEXED_SEQUENTIAL_ASC moves a joint sequentially
-                                       //more tokens are defined in OpenCat.h
-  } else {
-    strcpy(newCmd, "sit");          //load a skill to be processed by the later reaction function
-    if (strcmp(lastCmd, newCmd)) {  //won't repeatively load the same skill
-      newCmdIdx = 5;
-      token = T_SKILL;  //T_SKILL loads a skill
-    }
-  }
+  // skill.loadFrame("pee");
+  // strcpy(newCmd, "pee");
+  // for(int i = 0; i < 10; i++){
+  //   randomMind();
+  // }
+  
+  // strcpy(dataBuffer, "0 -30 0 30");
+  // newCmdIdx = 5; 
+  // token = T_INDEXED_SEQUENTIAL_ASC; 
+                      
+  // int currentReading = analogRead(A2);
+  // PT("Reading on pin A2:\t");
+  // PTL(currentReading);
+  // if (currentReading > 200) {          //touch and hold on the A2 pin until the condition is met
+  //   beep(10, 20, 50, 3);               //make sound within this function body
+  //   skill.loadFrame("balance");        //load a posture within this function body
+  //   strcpy(newCmd, "balance");         //because this command is not processed by the reaction(), you need to update the newCmd for the program to track it
+  //   strcpy(dataBuffer, "0 -30 0 30");  //load a command to be processed by the later reaction function
+  //   newCmdIdx = 5;                     //tells the reaction function that there's a new command (as long as it's larger than 0)
+  //   token = T_INDEXED_SEQUENTIAL_ASC;  //tells the reaction function about the command type
+  //                                      //T_INDEXED_SEQUENTIAL_ASC moves a joint sequentially
+  //                                      //more tokens are defined in OpenCat.h
+  // } else {
+  //   strcpy(newCmd, "sit");          //load a skill to be processed by the later reaction function
+  //   if (strcmp(lastCmd, newCmd)) {  //won't repeatively load the same skill
+  //     newCmdIdx = 5;
+  //     token = T_SKILL;  //T_SKILL loads a skill
+  //   }
+  // }
 }
 #endif
