@@ -113,12 +113,8 @@ void loop() {
 
 #ifdef HIGH_LEVEL_RANDOM // causes Bittle to randomly perform high level actions (see `OpenCat/src/randomMind.h`)
   randomMind(); 
-#endif
-
-#ifdef HIGH_LEVEL_RANDOM // causes Bittle to randomly perform high level actions (see `OpenCat/src/randomMind.h`)
-  randomMind(); 
   #else
-  #ifdef LOW_LEVEL_RANDOM
+  #ifdef LOW_LEVEL_RANDOM // for handling low level actions
   allRandom();
   #endif
 #endif
