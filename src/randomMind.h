@@ -40,8 +40,8 @@ byte randomMindListLength = sizeof(mindList) / 2;
 int randomBase = 0;
 void allRandom() {
   char tokenSet[] = {T_INDEXED_SIMULTANEOUS_BIN, T_INDEXED_SEQUENTIAL_BIN};
-  int8_t jointSet[] = {0, 1, 2,};// 8, 9,  12, 13, 14, 15};
-  byte rangeSet[] = {60, 60, 180,};// 10, 10, 20, 20, 10, 10};
+  int8_t jointSet[] = {0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+  byte rangeSet[] = {60, 60, 180, 180, 180, 180, 60, 60, 10, 10, 60, 20, 20, 10, 10};
 
   token = tokenSet[random() % 2];
   cmdLen =  sizeof(jointSet) ;//random() % 2 + 2;
